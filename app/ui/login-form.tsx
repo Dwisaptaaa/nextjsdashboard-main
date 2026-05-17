@@ -7,13 +7,25 @@ import {
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import { Button } from './button';
 
-export default function LoginForm() {
+export default function LoginForm({
+  action,
+  error,
+}: {
+  action: (formData: FormData) => Promise<void>;
+  error?: string;
+}) {
   return (
-    <form className="space-y-3">
+    <form action={action} className="space-y-3">
       <div className="flex-1 rounded-lg bg-gray-50 px-6 pb-4 pt-8">
         <h1 className={`${lusitana.className} mb-3 text-2xl`}>
           Please log in to continue.
         </h1>
+        {error === 'invalid' && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <ExclamationCircleIcon className="h-5 w-5" />
+            Password incorrect. Please use the correct password.
+          </div>
+        )}
         <div className="w-full">
           <div>
             <label
@@ -58,9 +70,6 @@ export default function LoginForm() {
         <Button className="mt-4 w-full">
           Log in <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
         </Button>
-        <div className="flex h-8 items-end space-x-1">
-          {/* Add form errors here */}
-        </div>
       </div>
     </form>
   );

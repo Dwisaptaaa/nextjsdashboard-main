@@ -3,52 +3,73 @@
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { generatePagination } from '@/app/lib/utils';
 
-export default function Pagination({ totalPages }: { totalPages: number }) {
-  // NOTE: Uncomment this code in Chapter 10
+export default function Pagination({
+  totalPages,
+  currentPage,
+}: {
+  totalPages: number;
+  currentPage: number;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const allPages = generatePagination(currentPage, totalPages);
 
-  // const allPages = generatePagination(currentPage, totalPages);
+  const createPageURL = (page: number | string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (page === '...') {
+      return pathname;
+    }
+
+    const pageNumber = Number(page);
+    if (pageNumber <= 1) {
+      params.delete('page');
+    } else {
+      params.set('page', String(pageNumber));
+    }
+
+    const queryString = params.toString();
+    return queryString ? `${pathname}?${queryString}` : pathname;
+  };
 
   return (
-    <>
-      {/*  NOTE: Uncomment this code in Chapter 10 */}
+    <div className="inline-flex">
+      <PaginationArrow
+        direction="left"
+        href={createPageURL(Math.max(1, currentPage - 1))}
+        isDisabled={currentPage <= 1}
+      />
 
-      {/* <div className="inline-flex">
-        <PaginationArrow
-          direction="left"
-          href={createPageURL(currentPage - 1)}
-          isDisabled={currentPage <= 1}
-        />
+      <div className="flex -space-x-px">
+        {allPages.map((page, index) => {
+          let position: 'first' | 'last' | 'single' | 'middle' | undefined;
 
-        <div className="flex -space-x-px">
-          {allPages.map((page, index) => {
-            let position: 'first' | 'last' | 'single' | 'middle' | undefined;
+          if (index === 0) position = 'first';
+          if (index === allPages.length - 1) position = 'last';
+          if (allPages.length === 1) position = 'single';
+          if (page === '...') position = 'middle';
 
-            if (index === 0) position = 'first';
-            if (index === allPages.length - 1) position = 'last';
-            if (allPages.length === 1) position = 'single';
-            if (page === '...') position = 'middle';
+          return (
+            <PaginationNumber
+              key={`${page}-${index}`}
+              href={createPageURL(page)}
+              page={page}
+              position={position}
+              isActive={currentPage === page}
+            />
+          );
+        })}
+      </div>
 
-            return (
-              <PaginationNumber
-                key={`${page}-${index}`}
-                href={createPageURL(page)}
-                page={page}
-                position={position}
-                isActive={currentPage === page}
-              />
-            );
-          })}
-        </div>
-
-        <PaginationArrow
-          direction="right"
-          href={createPageURL(currentPage + 1)}
-          isDisabled={currentPage >= totalPages}
-        />
-      </div> */}
-    </>
+      <PaginationArrow
+        direction="right"
+        href={createPageURL(Math.min(totalPages, currentPage + 1))}
+        isDisabled={currentPage >= totalPages}
+      />
+    </div>
   );
 }
 
