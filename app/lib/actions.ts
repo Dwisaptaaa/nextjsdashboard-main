@@ -4,6 +4,7 @@ import postgres from 'postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
 
 const sql = process.env.POSTGRES_URL
   ? postgres(process.env.POSTGRES_URL, { ssl: 'require' })
@@ -16,7 +17,9 @@ const isDatabaseAvailable = (value: SqlClient | null): value is SqlClient =>
 
 const getSql = (): SqlClient => {
   if (!sql) {
-    throw new Error('Database unavailable');
+    throw new Error(
+      'Database unavailable. Please set POSTGRES_URL environment variable.'
+    );
   }
   return sql;
 };
@@ -72,17 +75,26 @@ export async function createInvoice(
 
   try {
     if (!isDatabaseAvailable(sql)) {
-      throw new Error('Database unavailable');
+      console.warn('⚠️ Database not available - set POSTGRES_URL environment variable');
+      return {
+        message:
+          'Database Error: POSTGRES_URL not configured. Please set database credentials in environment variables.',
+      };
     }
+
+    console.log('📝 Creating invoice:', { customerId, amountInCents, status, date });
 
     await getSql()`
       INSERT INTO invoices (customer_id, amount, status, date)
       VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
     `;
+
+    console.log('✅ Invoice created successfully');
   } catch (error) {
-    console.error('Database Error:', error);
+    console.error('❌ Database Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return {
-      message: 'Database Error: Failed to Create Invoice.',
+      message: `Database Error: ${errorMessage}`,
     };
   }
 
@@ -113,18 +125,27 @@ export async function updateInvoice(
 
   try {
     if (!isDatabaseAvailable(sql)) {
-      throw new Error('Database unavailable');
+      console.warn('⚠️ Database not available - set POSTGRES_URL environment variable');
+      return {
+        message:
+          'Database Error: POSTGRES_URL not configured. Please set database credentials in environment variables.',
+      };
     }
+
+    console.log('📝 Updating invoice:', { id, customerId, amountInCents, status });
 
     await getSql()`
       UPDATE invoices
       SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
       WHERE id = ${id}
     `;
+
+    console.log('✅ Invoice updated successfully');
   } catch (error) {
-    console.error('Database Error:', error);
+    console.error('❌ Database Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return {
-      message: 'Database Error: Failed to Update Invoice.',
+      message: `Database Error: ${errorMessage}`,
     };
   }
 
