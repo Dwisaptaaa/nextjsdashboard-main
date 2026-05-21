@@ -17,7 +17,7 @@ import {
 } from './placeholder-data';
 
 const sql = process.env.POSTGRES_URL
-  ? postgres(process.env.POSTGRES_URL, { ssl: 'require' })
+  ? postgres(process.env.POSTGRES_URL)
   : null;
 
 type SqlClient = ReturnType<typeof postgres>;
