@@ -156,13 +156,20 @@ export async function updateInvoice(
 export async function deleteInvoice(id: string): Promise<void> {
   try {
     if (!isDatabaseAvailable(sql)) {
-      throw new Error('Database unavailable');
+      console.warn('⚠️ Database not available - set POSTGRES_URL environment variable');
+      throw new Error(
+        'Database Error: POSTGRES_URL not configured. Please set database credentials in environment variables.'
+      );
     }
 
+    console.log('🗑️ Deleting invoice:', { id });
+
     await getSql()`DELETE FROM invoices WHERE id = ${id}`;
+
+    console.log('✅ Invoice deleted successfully');
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to delete invoice.');
+    console.error('❌ Database Error:', error);
+    throw error;
   }
 
   revalidatePath('/dashboard/invoices');
