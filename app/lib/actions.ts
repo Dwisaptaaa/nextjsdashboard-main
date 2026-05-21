@@ -4,7 +4,6 @@ import postgres from 'postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
 
 const sql = process.env.POSTGRES_URL
   ? postgres(process.env.POSTGRES_URL, { ssl: 'require' })
