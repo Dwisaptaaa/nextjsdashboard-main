@@ -1,12 +1,23 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
+import { Metadata } from 'next';
 import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
 import Search from '@/app/ui/search';
 import InvoicesTable from '@/app/ui/invoices/table';
 import Pagination from '@/app/ui/invoices/pagination';
 import { CreateInvoice } from '@/app/ui/invoices/buttons';
 import { fetchInvoicesPages } from '@/app/lib/data';
+
+export function generateMetadata({ searchParams }: { searchParams: { q?: string } }): Metadata {
+  const query = searchParams.q?.trim();
+
+  return {
+    title: query ? `Search: ${query} • Invoices` : 'Invoices • Acme Dashboard',
+    description:
+      'Browse invoices, use search filters, and manage payment status from a clean dashboard experience.',
+  };
+}
 
 export default async function Page({
   searchParams,

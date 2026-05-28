@@ -2,6 +2,27 @@ import { fetchInvoiceById, fetchCustomers } from '@/app/lib/data';
 import EditInvoiceForm from '@/app/ui/invoices/edit-form';
 import Breadcrumbs from '@/app/ui/invoices/breadcrumbs';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const invoice = await fetchInvoiceById(params.id);
+
+  if (!invoice) {
+    return {
+      title: 'Invoice not found • Acme Dashboard',
+      description: 'The requested invoice could not be found.',
+    };
+  }
+
+  return {
+    title: `Edit Invoice ${invoice.id.substring(0, 8)} • Acme Dashboard`,
+    description: `Edit invoice ${invoice.id} and adjust customer, amount, or status.`,
+  };
+}
 
 export default async function Page({
   params,
