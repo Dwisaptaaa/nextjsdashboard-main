@@ -111,7 +111,7 @@ export async function createInvoice(
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create Invoice.',
+      message: 'Please select an invoice status.',
     };
   }
 
@@ -148,7 +148,7 @@ export async function createInvoice(
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     throw new Error(errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')
       ? errorMessage
-      : 'Failed to create invoice.');
+      : 'Please select an invoice status.');
   }
 
   revalidatePath('/dashboard/invoices');

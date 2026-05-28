@@ -3,8 +3,7 @@ import LoginForm from '@/app/ui/login-form';
 import { auth } from '@/auth';
 
 export const metadata = {
-  title: 'Sign in • Acme Dashboard',
-  description: 'Secure login for access to invoices, customers, and dashboard metrics.',
+  title: 'Login',
 };
 
 export default async function LoginPage() {
@@ -15,8 +14,8 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 sm:px-10">
-      <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
+    <main className="flex items-center justify-center md:h-screen">
+      <div className="relative mx-auto flex w-full max-w-[400px] flex-col space-y-2.5 p-4 md:-mt-32">
         <LoginForm />
       </div>
     </main>

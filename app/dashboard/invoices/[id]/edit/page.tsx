@@ -4,31 +4,28 @@ import Breadcrumbs from '@/app/ui/invoices/breadcrumbs';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
 export async function generateMetadata({
   params,
-}: {
-  params: { id: string };
-}): Promise<Metadata> {
-  const invoice = await fetchInvoiceById(params.id);
+}: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const invoice = await fetchInvoiceById(id);
 
   if (!invoice) {
     return {
-      title: 'Invoice not found • Acme Dashboard',
-      description: 'The requested invoice could not be found.',
+      title: 'Invoice not found',
     };
   }
 
   return {
-    title: `Edit Invoice ${invoice.id.substring(0, 8)} • Acme Dashboard`,
-    description: `Edit invoice ${invoice.id} and adjust customer, amount, or status.`,
+    title: 'Edit Invoice',
   };
 }
 
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function Page({ params }: PageProps) {
   const { id } = await params;
 
   const [invoice, customers] = await Promise.all([
