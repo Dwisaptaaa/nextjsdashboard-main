@@ -4,6 +4,8 @@ import postgres from 'postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
+import type { User } from './definitions';
+import { users as mockUsers } from './placeholder-data';
 
 const sql = process.env.POSTGRES_URL
   ? postgres(process.env.POSTGRES_URL, { ssl: 'require' })
@@ -48,6 +50,52 @@ export type State = {
   message?: string | null;
 };
 
+export async function authenticate(
+  email: string,
+  password: string,
+): Promise<Omit<User, 'password'>> {
+  const normalizedEmail = String(email ?? '').trim().toLowerCase();
+  if (!normalizedEmail || !password) {
+    throw new Error('Email and password are required.');
+  }
+
+  try {
+    if (!isDatabaseAvailable(sql)) {
+      const mockUser = mockUsers.find(
+        (user) => user.email.toLowerCase() === normalizedEmail,
+      );
+      if (!mockUser || mockUser.password !== password) {
+        throw new Error('Invalid email or password.');
+      }
+      const { password: _password, ...publicUser } = mockUser;
+      return publicUser;
+    }
+
+    const rows = await getSql()`SELECT id, name, email, password FROM users WHERE email = ${normalizedEmail}`;
+    const user = rows[0];
+    if (!user) {
+      throw new Error('Invalid email or password.');
+    }
+
+    const bcrypt = (await import('bcrypt')) as any;
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      throw new Error('Invalid email or password.');
+    }
+
+    return {
+      id: String(user.id),
+      name: String(user.name),
+      email: String(user.email),
+    };
+  } catch (error) {
+    console.error('Authentication error:', error);
+    throw new Error(
+      error instanceof Error ? error.message : 'Failed to authenticate.',
+    );
+  }
+}
+
 export async function createInvoice(
   prevState: State,
   formData: FormData,
@@ -74,11 +122,9 @@ export async function createInvoice(
 
   try {
     if (!isDatabaseAvailable(sql)) {
-      console.warn('⚠️ Database not available - set POSTGRES_URL environment variable');
-      return {
-        message:
-          'Database Error: POSTGRES_URL not configured. Please set database credentials in environment variables.',
-      };
+      throw new Error(
+        'Database Error: POSTGRES_URL not configured. Please set database credentials in environment variables.',
+      );
     }
 
     // Ensure the customer exists before creating an invoice
@@ -100,16 +146,9 @@ export async function createInvoice(
   } catch (error) {
     console.error('❌ Database Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    // If this is an environment/database config problem, return user-friendly state
-    if (errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')) {
-      return {
-        message: `Database Error: ${errorMessage}`,
-      };
-    }
-
-    // Unexpected errors should bubble up to the global error boundary
-    throw error;
+    throw new Error(errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')
+      ? errorMessage
+      : 'Failed to create invoice.');
   }
 
   revalidatePath('/dashboard/invoices');
@@ -139,11 +178,9 @@ export async function updateInvoice(
 
   try {
     if (!isDatabaseAvailable(sql)) {
-      console.warn('⚠️ Database not available - set POSTGRES_URL environment variable');
-      return {
-        message:
-          'Database Error: POSTGRES_URL not configured. Please set database credentials in environment variables.',
-      };
+      throw new Error(
+        'Database Error: POSTGRES_URL not configured. Please set database credentials in environment variables.',
+      );
     }
 
     // Ensure the invoice exists; otherwise produce a 404
@@ -164,14 +201,9 @@ export async function updateInvoice(
   } catch (error) {
     console.error('❌ Database Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    if (errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')) {
-      return {
-        message: `Database Error: ${errorMessage}`,
-      };
-    }
-
-    throw error;
+    throw new Error(errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')
+      ? errorMessage
+      : 'Failed to update invoice.');
   }
 
   revalidatePath('/dashboard/invoices');
@@ -201,13 +233,11 @@ export async function deleteInvoice(id: string): Promise<void> {
   } catch (error) {
     console.error('❌ Database Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    if (errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')) {
-      throw new Error(errorMessage);
-    }
-
-    throw error;
+    throw new Error(errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')
+      ? errorMessage
+      : 'Failed to delete invoice.');
   }
 
   revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
 }

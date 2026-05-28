@@ -9,15 +9,11 @@ import Pagination from '@/app/ui/invoices/pagination';
 import { CreateInvoice } from '@/app/ui/invoices/buttons';
 import { fetchInvoicesPages } from '@/app/lib/data';
 
-export function generateMetadata({ searchParams }: { searchParams: { q?: string } }): Metadata {
-  const query = searchParams.q?.trim();
-
-  return {
-    title: query ? `Search: ${query} • Invoices` : 'Invoices • Acme Dashboard',
-    description:
-      'Browse invoices, use search filters, and manage payment status from a clean dashboard experience.',
-  };
-}
+export const metadata: Metadata = {
+  title: 'Invoices',
+  description:
+    'Browse invoices, use search filters, and manage payment status from a clean dashboard experience.',
+};
 
 export default async function Page({
   searchParams,
