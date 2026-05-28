@@ -2,7 +2,7 @@
 
 import postgres from 'postgres';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 
 const sql = process.env.POSTGRES_URL
@@ -81,6 +81,14 @@ export async function createInvoice(
       };
     }
 
+    // Ensure the customer exists before creating an invoice
+    const customerRow = await getSql()`SELECT id FROM customers WHERE id = ${customerId}`;
+    if (!customerRow || !customerRow[0]) {
+      return {
+        message: 'Customer not found. Please choose a valid customer.',
+      };
+    }
+
     console.log('📝 Creating invoice:', { customerId, amountInCents, status, date });
 
     await getSql()`
@@ -92,9 +100,16 @@ export async function createInvoice(
   } catch (error) {
     console.error('❌ Database Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return {
-      message: `Database Error: ${errorMessage}`,
-    };
+
+    // If this is an environment/database config problem, return user-friendly state
+    if (errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')) {
+      return {
+        message: `Database Error: ${errorMessage}`,
+      };
+    }
+
+    // Unexpected errors should bubble up to the global error boundary
+    throw error;
   }
 
   revalidatePath('/dashboard/invoices');
@@ -131,6 +146,12 @@ export async function updateInvoice(
       };
     }
 
+    // Ensure the invoice exists; otherwise produce a 404
+    const existing = await getSql()`SELECT id FROM invoices WHERE id = ${id}`;
+    if (!existing || !existing[0]) {
+      notFound();
+    }
+
     console.log('📝 Updating invoice:', { id, customerId, amountInCents, status });
 
     await getSql()`
@@ -143,9 +164,14 @@ export async function updateInvoice(
   } catch (error) {
     console.error('❌ Database Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return {
-      message: `Database Error: ${errorMessage}`,
-    };
+
+    if (errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')) {
+      return {
+        message: `Database Error: ${errorMessage}`,
+      };
+    }
+
+    throw error;
   }
 
   revalidatePath('/dashboard/invoices');
@@ -161,6 +187,12 @@ export async function deleteInvoice(id: string): Promise<void> {
       );
     }
 
+    // Ensure the invoice exists before attempting a delete
+    const existing = await getSql()`SELECT id FROM invoices WHERE id = ${id}`;
+    if (!existing || !existing[0]) {
+      notFound();
+    }
+
     console.log('🗑️ Deleting invoice:', { id });
 
     await getSql()`DELETE FROM invoices WHERE id = ${id}`;
@@ -168,6 +200,12 @@ export async function deleteInvoice(id: string): Promise<void> {
     console.log('✅ Invoice deleted successfully');
   } catch (error) {
     console.error('❌ Database Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    if (errorMessage.includes('POSTGRES_URL') || errorMessage.includes('Database unavailable')) {
+      throw new Error(errorMessage);
+    }
+
     throw error;
   }
 

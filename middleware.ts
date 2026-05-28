@@ -1,14 +1,10 @@
-import { auth } from './auth';
+// Middleware intentionally disabled. Route protection is handled in server layouts.
 import { NextResponse } from 'next/server';
 
-export default auth(async (request) => {
-  if (!request.auth?.user) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
+export function middleware() {
   return NextResponse.next();
-});
+}
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: [],
 };

@@ -3,6 +3,8 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbopack",
+    "dev:webpack": "next dev --no-turbopack",
+    "postinstall": "node ./scripts/patch-node-pre-gyp.js",
     "start": "next start"
   },
   "dependencies": {
@@ -28,6 +30,9 @@
     "@types/node": "22.10.7",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
+    "aws-sdk": "^2.1693.0",
+    "mock-aws-s3": "^4.0.2",
+    "nock": "^14.0.15",
     "typescript": "5.7.3"
   },
   "pnpm": {
