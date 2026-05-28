@@ -1,4 +1,4 @@
 allowBuilds:
-  aws-sdk: set this to true or false
+  aws-sdk: true
   bcrypt: true
   sharp: true

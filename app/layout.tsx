@@ -1,10 +1,15 @@
 import '@/app/ui/global.css';
 import { inter } from '@/app/ui/fonts';
+import type { Metadata } from 'next';
 
-export const metadata = {
-  title: 'Acme Dashboard',
+export const metadata: Metadata = {
+  title: {
+    default: 'Acme Dashboard',
+    template: '%s • Acme Dashboard',
+  },
   description:
     'A secure invoice management dashboard built with Next.js App Router, Tailwind CSS, and NextAuth.',
+  metadataBase: new URL('http://localhost:3000'),
 };
 
 export default function RootLayout({
